@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Teams Meeting Summary</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background: #f0f4f8;
+}
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f3460, #16213e, #1a1a2e);
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+}
+
+button {
+  padding: 10px 15px;
+  background: #e94560;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.tag {
+  display: inline-block;
+  background: #eee;
+  padding: 5px 10px;
+  margin: 5px;
+  border-radius: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div class="container">
+
+    <h1>Teams Meeting Summary</h1>
+
+    <input id="subject" placeholder="Subject">
+    <input id="level" placeholder="Level">
+    <input id="date" placeholder="Date">
+    <input id="duration" placeholder="Duration (minutes)">
+    <input id="teacher" placeholder="Teacher">
+
+    <div>
+      <input id="participantInput" placeholder="Add participant">
+      <button onclick="addParticipant()">Add</button>
+      <div id="participants"></div>
+    </div>
+
+    <textarea id="transcript" rows="8" placeholder="Paste meeting transcript..."></textarea>
+
+    <button onclick="generateSummary()">Generate Summary</button>
+
+    <div id="output"></div>
+
+  </div>
+</div>
+
+<script>
+let participants = [];
+
+function addParticipant() {
+  const input = document.getElementById("participantInput");
+  const val = input.value.trim();
+
+  if (val && !participants.includes(val)) {
+    participants.push(val);
+    input.value = "";
+    renderParticipants();
+  }
+}
+
+function removeParticipant(name) {
+  participants = participants.filter(p => p !== name);
+  renderParticipants();
+}
+
+function renderParticipants() {
+  const container = document.getElementById("participants");
+  container.innerHTML = participants.map(p =>
+    `<span class="tag">${p} ✖</span>`
+  ).join("");
+
+  [...container.children].forEach((el, i) => {
+    el.onclick = () => removeParticipant(participants[i]);
+  });
+}
+
+function parseSummary(text) {
+  const sections = {};
+  const patterns = {
+    overview: /(?:overview|summary)[:\s]*([\s\S]*?)(?=topics|homework|action|notes|$)/i,
+    topics: /(?:topics|key topics)[:\s]*([\s\S]*?)(?=homework|action|notes|$)/i,
+    homework: /(?:homework|assignments)[:\s]*([\s\S]*?)(?=action|notes|$)/i,
+    actions: /(?:action items|next steps)[:\s]*([\s\S]*?)(?=notes|$)/i,
+    notes: /(?:notes|teacher notes)[:\s]*([\s\S]*?)$/i,
+  };
+
+  for (const key in patterns) {
+    const match = text.match(patterns[key]);
+    if (match) sections[key] = match[1].trim();
+  }
+
+  if (!Object.keys(sections).length) {
+    sections.overview = text;
+  }
+
+  return sections;
+}
+
+function generateSummary() {
+  const transcript = document.getElementById("transcript").value;
+
+  if (!transcript.trim()) {
+    alert("Please enter transcript");
+    return;
+  }
+
+  const parsed = parseSummary(transcript);
+
+  let html = `<h2>Summary</h2>`;
+
+  for (const key in parsed) {
+    html += `
+      <h3>${key.toUpperCase()}</h3>
+      <p>${parsed[key]}</p>
+    `;
+  }
+
+  document.getElementById("output").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
